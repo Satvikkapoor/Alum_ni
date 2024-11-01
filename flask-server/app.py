@@ -30,7 +30,7 @@ def load_vectors():
     for row in data:
         profile_ids.append(row[0])
         vector = np.frombuffer(row[1], dtype='float32')
-        print(f"AlumniID: {row[0]}, Vector Shape: {vector.shape}")
+        #print(f"AlumniID: {row[0]}, Vector Shape: {vector.shape}")
         
         vectors.append(vector)
 
@@ -51,7 +51,7 @@ profile_ids = load_vectors()
 def add_profile():
     data = request.get_json()
     required_fields = ['FullName', 'CurrentRole', 'Company', 'University', 'HighSchool', 'LinkedInURL']
-    
+    print("got to add profile")
     if not all(field in data for field in required_fields):
         return jsonify({"status": "error", "message": "Missing required fields"}), 400
 
@@ -93,6 +93,7 @@ def search_profiles():
         return jsonify({"status": "success", "results": []})
 
     result_ids = [profile_ids[i] for i in indices[0] if i < len(profile_ids)]
+    print("there are the result_ids", result_ids)
     detailed_results = get_profiles_from_indices(result_ids)
 
     response = [

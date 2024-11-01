@@ -66,18 +66,29 @@ def insert_vector(alumni_id, profile_text):
         close_db_connection(conn, cursor)
         
 def get_profiles_from_indices(result_ids):
-    """Fetch detailed alumni information based on result IDs."""
+    """Fetch detailed alumni information based on result IDs in the order of input IDs."""
+    if not result_ids:
+        return []  # Return an empty list if no result IDs are provided
+
     conn, cursor = get_db_connection()
     try:
-        cursor.execute(
+        # Use ANY to fetch all matching records
+        query = (
             "SELECT AlumniID, FullName, CurrentRole, Company, University, HighSchool, LinkedInURL "
-            "FROM AlumniProfiles WHERE AlumniID IN %s;", 
-            (tuple(result_ids),)
+            "FROM AlumniProfiles WHERE AlumniID = ANY(%s);"
         )
+        cursor.execute(query, (result_ids,))
         results = cursor.fetchall()
-        return results
+
+        # Create a dictionary for quick lookup
+        result_dict = {row[0]: row for row in results}
+
+        # Return results in the same order as result_ids
+        ordered_results = [result_dict[alumni_id] for alumni_id in result_ids if alumni_id in result_dict]
+        return ordered_results
     except Exception as e:
         print("Error fetching profiles:", e)
         return []
     finally:
         close_db_connection(conn, cursor)
+
