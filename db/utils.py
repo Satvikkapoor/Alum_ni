@@ -2,7 +2,7 @@ import numpy as np
 import datetime
 import certifi
 from pymongo import MongoClient
-from bson import Binary
+from bson import Binary, ObjectId
 from sentence_transformers import SentenceTransformer
 
 uri = "mongodb+srv://ksatvik:S9050756696k@cluster0.z3sbo.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0"
@@ -52,17 +52,25 @@ def insert_vector(alumni_id, profile_text):
 def get_profiles_from_indices(result_ids):
     """Fetch detailed alumni information based on result IDs in the order of input IDs."""
     if not result_ids:
-        return []  
+        return []
     try:
-        # Query the alumniProfiles collection for matching IDs
-        results = alumni_profiles.find({"alumniId": {"$in": result_ids}})
+        # Convert result_ids to ObjectId instances
+        object_ids = [ObjectId(id) if ObjectId.is_valid(id) else id for id in result_ids]
+
+        # Query the alumniProfiles collection using _id
+        results = alumni_profiles.find({"_id": {"$in": object_ids}})
         
         # Convert cursor to a list and create a dictionary for ordering
         result_list = list(results)
-        result_dict = {item['alumniId']: item for item in result_list}
+        print("Fetched Profiles:", result_list)  # Debug print
+        
+        if not result_list:
+            print("No profiles found for the given IDs.")
+
+        result_dict = {str(item['_id']): item for item in result_list}
 
         # Order the results based on the input result_ids
-        ordered_results = [result_dict[alumni_id] for alumni_id in result_ids if alumni_id in result_dict]
+        ordered_results = [result_dict[str(alumni_id)] for alumni_id in result_ids if str(alumni_id) in result_dict]
         return ordered_results
     except Exception as e:
         print("Error fetching profiles:", e)
